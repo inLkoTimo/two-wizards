@@ -797,6 +797,12 @@ export default function Home() {
   const [chatText, setChatText] =
     useState("");
 
+  const [trickFlying, setTrickFlying] =
+    useState(false);
+
+  const [tricksBump, setTricksBump] =
+    useState<Player | null>(null);
+
   const chatBottom =
     useRef<HTMLDivElement | null>(
       null,
@@ -955,13 +961,17 @@ export default function Home() {
     gameId,
   ]);
 
-  useEffect(() => {
+    useEffect(() => {
     if (
       !state ||
       !gameId ||
+      !playerNumber ||
       state.phase !==
         "trickResult" ||
-      !state.trickResultUntil
+      !state.trickResultUntil ||
+      state.roundComplete ||
+      state.lastTrickWinner !==
+        playerNumber
     ) {
       return;
     }
@@ -1000,13 +1010,11 @@ export default function Home() {
 
           if (
             latest.game_state.phase !==
-            "trickResult"
-          ) {
-            return;
-          }
-
-          if (
-            latest.game_state.roundComplete
+              "trickResult" ||
+            latest.game_state.roundComplete ||
+            latest.game_state
+                .lastTrickWinner !==
+              playerNumber
           ) {
             return;
           }
@@ -1016,18 +1024,14 @@ export default function Home() {
               ...latest.game_state,
               phase: "playing",
               trick: [],
-              trickResultUntil:
-                null,
+              trickResultUntil: null,
               currentPlayer:
-                latest.game_state
-                  .lastTrickWinner ??
-                latest.game_state
-                  .currentPlayer,
+                playerNumber,
             },
             latest.id,
           );
         },
-        delay + 100,
+        delay + 50,
       );
 
     return () =>
@@ -1038,8 +1042,57 @@ export default function Home() {
     state?.roundComplete,
     state?.lastTrickWinner,
     gameId,
+    playerNumber,
   ]);
 
+  // Steuert rein lokal (pro Client), wann die beiden
+  // Trickkarten von "offen liegen" auf "wegfliegen zum
+  // Gewinner" umschalten. Läuft unabhängig von der
+  // geteilten DB-Phase, damit es ohne Round-Trip ruckelfrei
+  // animiert.
+  useEffect(() => {
+    if (
+      !state ||
+      state.phase !== "trickResult" ||
+      !state.trickResultUntil
+    ) {
+      setTrickFlying(false);
+      return;
+    }
+
+    const flyDuration = 420;
+    const until = state.trickResultUntil;
+    const winner = state.lastTrickWinner;
+
+    const delay = Math.max(
+      0,
+      until - flyDuration - Date.now(),
+    );
+
+    setTrickFlying(false);
+
+    const flyTimer = setTimeout(() => {
+      setTrickFlying(true);
+    }, delay);
+
+    const bumpTimer = setTimeout(() => {
+      setTricksBump(winner);
+    }, delay + flyDuration);
+
+    const bumpClearTimer = setTimeout(() => {
+      setTricksBump(null);
+    }, delay + flyDuration + 550);
+
+    return () => {
+      clearTimeout(flyTimer);
+      clearTimeout(bumpTimer);
+      clearTimeout(bumpClearTimer);
+    };
+  }, [
+    state?.phase,
+    state?.trickResultUntil,
+    state?.lastTrickWinner,
+  ]);
   async function saveGameState(
     nextState: GameState,
     id: string | null = gameId,
@@ -2612,7 +2665,17 @@ nextState.chat = [
                       "Spieler 2"}
                   </div>
 
-                  <div className="text-xs text-emerald-100/60">
+                  <div
+                    className={[
+                      "text-xs text-emerald-100/60 transition-transform duration-300",
+                      tricksBump ===
+                      (playerNumber === 1
+                        ? 2
+                        : 1)
+                        ? "scale-125 text-amber-300"
+                        : "scale-100",
+                    ].join(" ")}
+                  >
                     {opponentTricks}{" "}
                     Stiche
                   </div>
@@ -2648,6 +2711,17 @@ nextState.chat = [
               </div>
 
               <div className="relative flex min-h-0 flex-1 items-center justify-center">
+                <div className="absolute top-2 left-1/2 z-30 -translate-x-1/2 rounded-2xl border border-amber-300/20 bg-black/70 px-5 py-2 text-center shadow-xl">
+  <div className="text-[9px] uppercase tracking-[0.25em] text-amber-200/50">
+    Am Zug
+  </div>
+
+  <div className="font-black text-amber-100">
+    {state.currentPlayer === playerNumber
+      ? "✨ Du bist dran"
+      : `🪄 ${opponentName} ist dran`}
+  </div>
+</div>
                 {state.phase ===
                   "bidding" && (
                   <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-black/40 p-6 text-center">
@@ -2663,6 +2737,17 @@ nextState.chat = [
                     <h2 className="mt-2 text-3xl font-black">
                       Wie viele Stiche schaffst du?
                     </h2>
+                    <div className="mt-4 rounded-2xl bg-amber-500/10 px-4 py-3">
+  <div className="text-[9px] uppercase tracking-[0.25em] text-amber-200/50">
+    Als Nächstes dran
+  </div>
+
+  <div className="mt-1 font-black text-amber-100">
+    {state.currentPlayer === playerNumber
+      ? "✨ Du bist dran"
+      : `🪄 ${opponentName} ist dran`}
+  </div>
+</div>
 
                     <div className="mt-3 text-sm text-slate-500">
                       {myBid !==
@@ -2828,50 +2913,99 @@ nextState.chat = [
                   </div>
                 )}
 
-                {state.phase ===
-                  "trickResult" && (
-                  <div className="rounded-[2rem] border border-amber-300/20 bg-black/60 px-10 py-8 text-center">
-                    <div className="text-5xl">
-                      {state.lastTrickWinner ===
-                      playerNumber
-                        ? "✨"
-                        : "🪄"}
-                    </div>
-
-                    <h2 className="mt-3 text-3xl font-black">
-                      {state.lastTrickWinner ===
-                      playerNumber
-                        ? "Stich für dich!"
-                        : "Stich für den Gegner"}
-                    </h2>
-
-                    {state.roundComplete &&
-                      isCreator && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void startNextRound()
-                          }
-                          className="mt-6 rounded-2xl bg-white px-6 py-4 font-black text-slate-950"
-                        >
-                          {state.roundIndex ===
-                          ROUND_SIZES.length -
-                            1
-                            ? "Spiel beenden 🏆"
-                            : "Nächste Runde ✨"}
-                        </button>
-                      )}
-
-                    {state.roundComplete &&
-                      !isCreator && (
-                        <div className="mt-6 text-xs uppercase tracking-[0.2em] text-slate-600">
-                          Warte auf den anderen Wizard...
-                        </div>
-                      )}
-                  </div>
-                )}
+{state.phase ===
+  "trickResult" && (
+  <div className="w-full">
+    {/* BEIDE KARTEN LIEGEN KURZ OFFEN, DANN FLIEGEN SIE ZUM GEWINNER */}
+    <div className="flex min-h-[230px] items-center justify-center">
+      <div
+        className="flex items-center justify-center"
+        style={
+          trickFlying
+            ? {
+                transform:
+                  state.lastTrickWinner ===
+                  playerNumber
+                    ? "translate(0px, 240px) scale(0.4)"
+                    : "translate(-170px, -240px) scale(0.4)",
+                opacity: 0,
+                transition:
+                  "transform 420ms cubic-bezier(0.4,0,1,1), opacity 420ms ease-in",
+              }
+            : {
+                transform:
+                  "translate(0px, 0px) scale(1)",
+                opacity: 1,
+                transition:
+                  "transform 200ms ease-out, opacity 200ms ease-out",
+              }
+        }
+      >
+        {state.trick.map(
+          (played, index) => (
+            <div
+              key={played.card.id}
+              className={[
+                "relative text-center",
+                index === 1
+                  ? "-ml-12 sm:-ml-16"
+                  : "",
+              ].join(" ")}
+              style={{
+                zIndex: index + 1,
+                transform:
+                  index === 0
+                    ? "rotate(-5deg)"
+                    : "rotate(5deg)",
+              }}
+            >
+              <div className="mb-2 text-[9px] font-bold text-emerald-100/50">
+                {played.player ===
+                playerNumber
+                  ? "Du"
+                  : opponentName}
               </div>
 
+              <CardView
+                card={played.card}
+              />
+            </div>
+          ),
+        )}
+      </div>
+    </div>
+
+    {/* ERST WENN DIE RUNDE ZU ENDE IST, KOMMT EIN KASTEN MIT AKTION */}
+    {state.roundComplete && (
+      <div className="mx-auto w-fit rounded-[2rem] border border-amber-300/20 bg-black/60 px-8 py-5 text-center">
+        <div className="text-3xl">
+          🏆
+        </div>
+
+        {isCreator && (
+          <button
+            type="button"
+            onClick={() =>
+              void startNextRound()
+            }
+            className="mt-5 rounded-2xl bg-white px-6 py-4 font-black text-slate-950"
+          >
+            {state.roundIndex ===
+            ROUND_SIZES.length - 1
+              ? "Spiel beenden 🏆"
+              : "Neue Runde – Ansagen ✨"}
+          </button>
+        )}
+
+        {!isCreator && (
+          <div className="mt-5 text-xs uppercase tracking-[0.2em] text-slate-600">
+            Warte auf den anderen Wizard...
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+)}
               {state.phase !==
                 "bidding" && (
                 <div className="mb-2 flex shrink-0 items-center justify-center gap-2 text-[9px]">
@@ -2909,7 +3043,15 @@ nextState.chat = [
 
               <div className="text-center text-xs text-emerald-100/50">
                 Deine Stiche:{" "}
-                <span className="font-bold text-white">
+                <span
+                  className={[
+                    "inline-block font-bold text-white transition-transform duration-300",
+                    tricksBump ===
+                    playerNumber
+                      ? "scale-125 text-amber-300"
+                      : "scale-100",
+                  ].join(" ")}
+                >
                   {myTricks}
                 </span>
               </div>
