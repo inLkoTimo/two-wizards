@@ -24,3 +24,15 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Auf Touchgeräten soll das Ziehen am Kartentisch nicht die Seite
+   neu laden oder mitwandern. */
+html,
+body {
+  overscroll-behavior: none;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}

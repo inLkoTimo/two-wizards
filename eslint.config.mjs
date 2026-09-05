@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Die urspruengliche Fassung bleibt unveraendert erhalten und
+    // wird nicht mehr weiterentwickelt - daher hier ausgenommen.
+    "app/classic/**",
+    ".test-build/**",
   ]),
 ]);
 
