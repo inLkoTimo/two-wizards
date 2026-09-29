@@ -7,6 +7,7 @@ import { HandRow } from "./HandRow";
 import { CardBack, CardView } from "./PlayingCard";
 import { PlayerStrip } from "./PlayerStrip";
 import { RevealPanel } from "./RevealPanel";
+import { RulesOverlay } from "./RulesOverlay";
 import { ScorePanel } from "./ScorePanel";
 import { TrickArea } from "./TrickArea";
 import { SUIT_INFO, TOTAL_ROUNDS } from "@/lib/game/constants";
@@ -46,6 +47,7 @@ export function GameScreen({
 }) {
   const { animation, bumpWinner, pendingWinner } = useTrickAnimation(state);
   const [panel, setPanel] = useState<"chat" | "score" | null>(null);
+  const [rulesOpen, setRulesOpen] = useState(false);
 
   const opponent = otherPlayer(me);
 
@@ -116,13 +118,25 @@ export function GameScreen({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={onLeave}
-          className="shrink-0 rounded-lg border border-white/10 px-2.5 py-1.5 text-[11px] text-slate-400 hover:border-white/30 hover:text-white"
-        >
-          Verlassen
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setRulesOpen(true)}
+            aria-label="Spielregeln öffnen"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-300/30 bg-amber-400/10 px-2.5 py-1.5 text-[11px] font-bold text-amber-100 hover:border-amber-300/60"
+          >
+            <span aria-hidden>?</span>
+            <span className="hidden sm:inline">Regeln</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onLeave}
+            className="shrink-0 rounded-lg border border-white/10 px-2.5 py-1.5 text-[11px] text-slate-400 hover:border-white/30 hover:text-white"
+          >
+            Verlassen
+          </button>
+        </div>
       </header>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 p-2 lg:grid-cols-[minmax(190px,230px)_minmax(0,1fr)_minmax(230px,290px)] lg:gap-3 lg:p-3">
@@ -335,6 +349,14 @@ export function GameScreen({
           </div>
         </div>
       )}
+
+      <RulesOverlay
+        open={rulesOpen}
+        onClose={() => setRulesOpen(false)}
+        phase={state.phase}
+        trump={state.trump}
+        handSize={state.handSize}
+      />
     </main>
   );
 }

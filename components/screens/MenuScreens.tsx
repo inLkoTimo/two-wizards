@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { RulesOverlay } from "../game/RulesOverlay";
 import type { GameRow } from "@/lib/game/types";
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -32,6 +33,8 @@ export function HomeScreen({
   onCreate: () => void;
   onJoin: () => void;
 }) {
+  const [rulesOpen, setRulesOpen] = useState(false);
+
   return (
     <main className="min-h-[100dvh] bg-[#05080d] text-white">
       <div className="flex min-h-[100dvh] flex-col items-center justify-center px-6 py-12 text-center">
@@ -68,7 +71,17 @@ export function HomeScreen({
             Spiel beitreten
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setRulesOpen(true)}
+          className="mt-6 text-sm text-slate-500 underline-offset-4 transition hover:text-amber-200 hover:underline"
+        >
+          Wie geht das Spiel?
+        </button>
       </div>
+
+      <RulesOverlay open={rulesOpen} onClose={() => setRulesOpen(false)} />
     </main>
   );
 }
@@ -224,6 +237,7 @@ export function LobbyScreen({
   onLeave: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const ready = Boolean(game.player2_name);
 
   const copyCode = async () => {
@@ -307,15 +321,27 @@ export function LobbyScreen({
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={onLeave}
-            className="mt-3 w-full rounded-2xl border border-white/10 px-6 py-3 text-sm text-slate-400 hover:border-white/30 hover:text-white"
-          >
-            Verlassen
-          </button>
+          <div className="mt-3 flex gap-3">
+            <button
+              type="button"
+              onClick={() => setRulesOpen(true)}
+              className="flex-1 rounded-2xl border border-amber-300/25 bg-amber-400/10 px-6 py-3 text-sm font-bold text-amber-100 hover:border-amber-300/50"
+            >
+              Regeln ansehen
+            </button>
+
+            <button
+              type="button"
+              onClick={onLeave}
+              className="flex-1 rounded-2xl border border-white/10 px-6 py-3 text-sm text-slate-400 hover:border-white/30 hover:text-white"
+            >
+              Verlassen
+            </button>
+          </div>
         </div>
       </div>
+
+      <RulesOverlay open={rulesOpen} onClose={() => setRulesOpen(false)} />
     </main>
   );
 }
