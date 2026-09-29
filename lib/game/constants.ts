@@ -13,18 +13,19 @@ export const TOTAL_ROUNDS = ROUND_SIZES.length;
 export const SUITS: Suit[] = ["fire", "water", "air", "earth"];
 
 export const REACTIONS = [
-  "❤️",
-  "😂",
-  "😭",
-  "🙄",
-  "😮",
+  "🍑",
+  "❤️‍🩹",
+  "💔",
+  "🥹",
+  "😶‍🌫️",
+  "🫩",
+  "🤮",
   "😈",
-  "👀",
-  "👏",
-  "🔥",
+  "😭",
+  "🤛",
+  "😡",
   "🫦",
-  "🪨",
-  "💦",
+  "🦦",
 ];
 
 export const SUIT_INFO: Record<
