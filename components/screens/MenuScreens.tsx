@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { RulesOverlay } from "../game/RulesOverlay";
+import { faq, howItWorks } from "@/lib/site";
 import type { GameRow } from "@/lib/game/types";
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -79,7 +80,90 @@ export function HomeScreen({
         >
           Wie geht das Spiel?
         </button>
+
+        <span className="mt-10 text-xs uppercase tracking-[0.25em] text-slate-700">
+          mehr darüber ↓
+        </span>
       </div>
+
+      {/* Ab hier steht der Text, den Google lesen kann. Ein Bild und
+          zwei Knöpfe sind für eine Suchmaschine eine leere Seite. */}
+      <section className="border-t border-white/5 px-6 py-16 sm:py-20">
+        <div className="mx-auto max-w-2xl">
+          <h2 className="text-2xl font-black sm:text-3xl">
+            Ein Kartenspiel zu zweit, das wirklich für zwei gemacht ist
+          </h2>
+
+          <p className="mt-5 leading-relaxed text-slate-400">
+            Die meisten Kartenspiele zu zweit sind Notlösungen – abgespeckte
+            Varianten von Spielen, die eigentlich vier Leute brauchen. Two
+            Wizards ist von Anfang an für genau zwei Personen gebaut: ein
+            Stichspiel über 19 Runden, bei dem du vor jeder Runde ansagst, wie
+            viele Stiche du holen wirst. Triffst du deine Zahl genau, gibt es
+            Punkte. Daneben kostet es welche – zu wenige Stiche genauso wie zu
+            viele.
+          </p>
+
+          <p className="mt-4 leading-relaxed text-slate-400">
+            Gespielt wird online im Browser, auf Handy, Tablet oder Laptop. Ihr
+            braucht keine App und kein Konto. Einer erstellt das Spiel, teilt
+            den Code, und los geht&rsquo;s – auch wenn ein paar hundert
+            Kilometer dazwischen liegen.
+          </p>
+        </div>
+      </section>
+
+      <section className="border-t border-white/5 px-6 py-16 sm:py-20">
+        <div className="mx-auto max-w-2xl">
+          <h2 className="text-2xl font-black sm:text-3xl">So funktioniert es</h2>
+
+          <ol className="mt-7 space-y-6">
+            {howItWorks.map((step, index) => (
+              <li key={step.title} className="flex gap-4">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-400/15 text-sm font-black text-amber-200">
+                  {index + 1}
+                </span>
+
+                <div className="min-w-0">
+                  <h3 className="font-bold">{step.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-400">
+                    {step.text}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section className="border-t border-white/5 px-6 py-16 sm:py-20">
+        <div className="mx-auto max-w-2xl">
+          <h2 className="text-2xl font-black sm:text-3xl">Häufige Fragen</h2>
+
+          <dl className="mt-7 space-y-6">
+            {faq.map((item) => (
+              <div key={item.question}>
+                <dt className="font-bold">{item.question}</dt>
+                <dd className="mt-1.5 text-sm leading-relaxed text-slate-400">
+                  {item.answer}
+                </dd>
+              </div>
+            ))}
+          </dl>
+
+          <button
+            type="button"
+            onClick={onCreate}
+            className="mt-10 w-full rounded-2xl bg-white px-6 py-4 font-black text-slate-950 hover:bg-amber-100 sm:w-auto sm:px-10"
+          >
+            Jetzt Spiel erstellen
+          </button>
+        </div>
+      </section>
+
+      <footer className="border-t border-white/5 px-6 py-8 text-center text-xs text-slate-700">
+        Two Wizards · Kartenspiel zu zweit, kostenlos im Browser
+      </footer>
 
       <RulesOverlay open={rulesOpen} onClose={() => setRulesOpen(false)} />
     </main>

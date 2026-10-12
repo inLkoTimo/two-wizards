@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { siteDescription, siteName, siteUrl } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,10 +14,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Two Wizards",
-  description:
-    "Ein magisches Stichspiel für zwei – gemeinsam an einem Kartentisch, egal wie weit ihr auseinander seid.",
-  applicationName: "Two Wizards",
+  // metadataBase macht aus allen relativen Angaben (Vorschaubild,
+  // Canonical) vollstaendige Adressen - ohne das ignoriert Google
+  // sie stillschweigend.
+  metadataBase: new URL(siteUrl),
+  title: siteName,
+  description: siteDescription,
+  applicationName: siteName,
+  openGraph: {
+    type: "website",
+    locale: "de_DE",
+    siteName,
+    url: siteUrl,
+  },
+  twitter: { card: "summary_large_image" },
+  robots: { index: true, follow: true },
 };
 
 // viewportFit: "cover" sorgt dafür, dass das Layout auf iPhones bis
